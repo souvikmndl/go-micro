@@ -1,1 +1,4 @@
 ./project/db-data
+./project/db-data/*
+./project/db-data/mongo
+./project/db-data/postgres

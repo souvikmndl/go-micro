@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"net/http"
 	"time"
 
+	"github.com/souvikmndl/logger/data"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -19,6 +22,7 @@ const (
 var client *mongo.Client
 
 type Config struct {
+	Models data.Models
 }
 
 func main() {
@@ -28,6 +32,7 @@ func main() {
 		log.Panic(err)
 	}
 	client = mongoCient
+	log.Println("connected to mongo")
 
 	// create a context to disconnect
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -39,6 +44,34 @@ func main() {
 			panic(err)
 		}
 	}()
+
+	app := Config{
+		Models: data.New(client),
+	}
+
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%s", webPort),
+		Handler: app.routes(),
+	}
+
+	log.Println("starting server on port:", webPort)
+	err = srv.ListenAndServe()
+	if err != nil {
+		log.Panicf("unable to start logger service %s\n", err.Error())
+	}
+	log.Println("server started on port ", webPort)
+}
+
+func (app *Config) serve() {
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%s", webPort),
+		Handler: app.routes(),
+	}
+
+	err := srv.ListenAndServe()
+	if err != nil {
+		log.Panicf("unable to start logger service %s\n", err.Error())
+	}
 }
 
 func connectToMongo() (*mongo.Client, error) {
