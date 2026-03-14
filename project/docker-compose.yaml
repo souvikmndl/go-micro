@@ -24,6 +24,15 @@ services:
             MONGO_INITDB_ROOT_PASSWORD: password
         volumes:
             - ./db-data/mongo/:/data/db
+    rabbitmq:
+        image: "rabbitmq:3.9-alpine"
+        ports:
+            - "5672:5672"
+        deploy:
+            mode: replicated
+            replicas: 1
+        volumes:
+            - ./db-data/rabbitmq/:/var/lib/rabbitmq/
     broker-service:
         build:
             context: ./../broker-service
@@ -38,6 +47,14 @@ services:
         build:
             context: ./../logger-service
             dockerfile: ./../logger-service/logger-service.Dockerfile
+        restart: always
+        deploy:
+            mode: replicated
+            replicas: 1
+    listener-service:
+        build:
+            context: ./../listener-service
+            dockerfile: ./../listener-service/listener-service.Dockerfile
         restart: always
         deploy:
             mode: replicated
